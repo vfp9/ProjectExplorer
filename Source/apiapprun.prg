@@ -31,12 +31,14 @@ DEFINE CLASS apiapprun AS custom
 
 	PROCEDURE LaunchApp
 		*  Launch executable by CreateProcess() and return immediately
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		LOCAL cCommandLine, uFromDir, cWindowMode
 		WITH This
 			.icErrorMessage = ''
 			IF TYPE('.icCommandLine') # 'C'
 				*	Command line must be a character string
-				.icErrorMessage = 'icCommandLine must be set, and a string value'
+				.icErrorMessage = icerrormessage_LOC
 				RETURN .F.
 			ELSE
 				cCommandLine = ALLTRIM(.icCommandLine)
@@ -150,7 +152,7 @@ DEFINE CLASS apiapprun AS custom
 				.ParseProcessInfoStruc(cProcessInfo)
 				RETURN .T.
 			ELSE
-				.icErrorMessage = 'Process Specified by icCommandLine could not be started'
+				.icErrorMessage = icErrorMessage2_LOC
 				RETURN .F.
 			ENDIF
 		ENDWITH
@@ -158,6 +160,8 @@ DEFINE CLASS apiapprun AS custom
 
 
 	PROCEDURE LaunchAppAndWait
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		*	Invoke LaunchApp(), and then wait on the process to terminate before returning control
 		#DEFINE cnINFINITE 		0xFFFFFFFF
 		#DEFINE cnHalfASecond	500	&& milliseconds
@@ -188,7 +192,7 @@ DEFINE CLASS apiapprun AS custom
 					*	Give us an out in case the other app hangs - let <Esc> terminate waits
 					IF INKEY() = 27
 						*	Still running but we aren't waiting - return a -1 as a warning
-						.icErrorMessage = 'Process started but user did not wait on termination'
+						.icErrorMessage = icErrorMessage3_LOC
 						uResult = 0
 						EXIT
 					ENDIF
@@ -208,6 +212,9 @@ DEFINE CLASS apiapprun AS custom
 		*	termination code by passing an explicit handle, otherwise
 		*	use the object's process instance
 		LPARAMETER nProcessToCheck
+		
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		IF TYPE('nProcessToCheck') # 'N'
 			nProcessToCheck = this.inProcessHandle
 		ENDIF
@@ -222,11 +229,11 @@ DEFINE CLASS apiapprun AS custom
 				RETURN nExitCode
 			ELSE
 				*	Process did not exist in process table - no exit status
-				this.icErrorMessage = 'Process to check not in active Process Table'
+				this.icErrorMessage = icErrorMessage4_LOC
 				RETURN NULL
 			ENDIF
 		ELSE
-			this.icErrorMessage = 'NULL process handle passed to CheckProcessExitCode()'
+			this.icErrorMessage = icErrorMessage5_LOC
 			RETURN NULL
 		ENDIF
 	ENDPROC
@@ -236,14 +243,17 @@ DEFINE CLASS apiapprun AS custom
 		*  mostly so that people wouldn't accidentally mash up things they shouldn't when
 		*  experimenting
 		LPARAMETER nHandleToRelease
+		
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		LOCAL nResult
 		*	Use CloseHandle(), returns a BOOL;  0 = False
 		DECLARE SHORT CloseHandle IN Win32API AS CloseHand INTEGER nHandleToClose
 		IF TYPE('nHandleToRelease') = 'N' AND ! ISNULL(nHandleToRelease)
 			nResult = CloseHand(nHandleToRelease)
-			this.icErrorMessage = IIF(nResult = 0, 'CloseHandle() failed to close handle '+STR(nHandleToRelease),'')
+			this.icErrorMessage = IIF(nResult = 0, icErrorMessage6_LOC+STR(nHandleToRelease),'')
 		ELSE
-			this.icErrorMessage = 'Invalid handle passed to ReleaseHandle() invocation'
+			this.icErrorMessage = icErrorMessage7_LOC
 			nResult = 0
 		ENDIF
 		RETURN (nResult = 1)
@@ -263,6 +273,9 @@ DEFINE CLASS apiapprun AS custom
 		*
 		*  TerminateProcess() does not shut down in an orderly fashion;  this is for emergencies!
 		LPARAMETER nProcessToKill
+		
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		IF TYPE('nProcessToKill') # 'N'
 			nProcessToKill = This.inProcessHandle
 		ENDIF
@@ -272,9 +285,9 @@ DEFINE CLASS apiapprun AS custom
 		LOCAL nResult
 		IF ! ISNULL(nProcessToKill)
 			nResult = KillProc(nProcessToKill,0)
-			this.icErrorMessage = IIF(nResult = 0, 'TerminateProcess() could not kill process handle '+STR(nProcessToKill),'')
+			this.icErrorMessage = IIF(nResult = 0, icErrorMessage8_LOC+STR(nProcessToKill),'')
 		ELSE
-			this.icErrorMessage = 'NULL handle passed to KillProc()'
+			this.icErrorMessage = icErrorMessage9_LOC
 			nResult = 0
 		ENDIF
 		RETURN (nResult = 1)
@@ -295,13 +308,16 @@ DEFINE CLASS apiapprun AS custom
 	PROCEDURE ExtractDWORD
 		*  Convert a 4 byte string to an unsigned long (DWORD)
 		LPARAMETER cStringToExtractFrom
+		
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		IF TYPE('cStringToExtractFrom')='C' AND LEN(cStringToExtractFrom) >= 4
 			RETURN (((ASC(SUBST(cStringToExtractFrom,4,1))*256) + ;
 									ASC(SUBST(cStringToExtractFrom,3,1)))*256 + ;
 									ASC(SUBST(cStringToExtractFrom,2,1)))*256 + ;
 									ASC(LEFT(cStringToExtractFrom,1))
 		ELSE
-			this.icErrorMessage = 'Invalid DWORD string passed for conversion'
+			this.icErrorMessage = icErrorMessage10_LOC
 			RETURN NULL
 		ENDIF
 	ENDPROC
@@ -371,6 +387,9 @@ DEFINE CLASS apiapprun AS custom
 		*							RETURNS:  BOOL, check .icErrorMessage on .F.
 		*
 		LPARAMETERS tcCommandLine, tcLaunchDir, tcWindowMode
+		
+		#Include PROJECTEXPLORERLANGUAGE.H
+		
 		*	Set up the environment for the object
 		LOCAL aDirTest[1,5]
 		WITH THIS
@@ -389,7 +408,7 @@ DEFINE CLASS apiapprun AS custom
 				*	Not a character expression - ignore
 			CASE ADIR(aDirTest, tcLaunchDir, 'D') # 1
 				*	Either directory doesn't exist, or there's a wildcard in the expression
-				.icErrorMessage = 'Invalid directory for startup passed to Init method'
+				.icErrorMessage = icErrorMessage11_LOC
 			OTHERWISE
 				*	Valid directory - save it
 				.icLaunchDir = ALLTRIM(tcLaunchDir)
@@ -405,7 +424,7 @@ DEFINE CLASS apiapprun AS custom
 				IF ! EMPTY(.icErrorMessage)
 					.icErrorMessage = .icErrorMessage + ' &' + CHR(13) + CHR(10)
 				ENDIF
-				.icErrorMessage = .icErrorMessage + 'Invalid WindowMode passed to Init Method'
+				.icErrorMessage = .icErrorMessage + icErrorMessage12_LOC
 			ENDCASE
 		ENDWITH
 		RETURN .T.
@@ -425,9 +444,9 @@ oProcess = CREATEOBJ('API_AppRun','NOTEPAD.EXE AUTOEXEC.BAT','C:\','NOR')
 oProcess.LaunchApp()
 *Check the exit status;  259 means still running
 IF oProcess.CheckProcessExitCode() = 259
-	wait window 'Still running'
+	wait window Message1_LOC
 ELSE
-	wait window 'Terminated with a '+alltrim(str(oProcess.CheckProcessExitCode()))
+	wait window Message2_LOC+alltrim(str(oProcess.CheckProcessExitCode()))
 ENDIF
 ? oProcess.KillProc()
 oProcess = ''
