@@ -11,7 +11,13 @@
 
 * Other constants.
 
-#define ccLOADING			'Loading...'
+#IF VERSION(3) = [86]
+	#define ccLOADING			'’˝‘⁄‘ÿ»Î...'
 	* text for "dummy" node when child nodes aren't loaded at the start
+#ELSE
+	#define ccLOADING			'Loading...'
+	* text for "dummy" node when child nodes aren't loaded at the start
+#ENDIF
+
 #define ccKEY_SEPARATOR		'~'
 	* the character used to separate parts of the key
