@@ -12,8 +12,15 @@
 
 #define ccHEADER_TYPE					'H'
 	&& the type for header records in the TreeView cursor
-#define ccVFPX_PAGE						'http://github.com/DougHennig/ProjectExplorer'
+
+#IF VERSION(3) = [86]
+	#define ccVFPX_PAGE						'https://github.com/vfp9/ProjectExplorer'
 	&& Project Explorer page on VFPX
+#ELSE
+	#define ccVFPX_PAGE						'http://github.com/DougHennig/ProjectExplorer'
+	&& Project Explorer page on VFPX
+#ENDIF
+
 #define ccSTACK_SEPARATOR				'@'
 	&& the separator used between information of items added to the stack
 
